@@ -45,10 +45,14 @@ const registerUser = asyncHandler(async (req, res,next) => {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
   
-  const options = {
+  let options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "prod",
   };
+  if(process.env.NODE_ENV === "prod"){
+    options = {...options,sameSite:'None'}
+  }
+
 
   return res
     .status(201)

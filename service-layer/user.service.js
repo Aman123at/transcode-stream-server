@@ -1,6 +1,10 @@
-
 import { UserLoginType } from "../constants/constants.js";
-import { createNewUser, findOneUser, findUserById, saveUserInDB } from "../db-layer/database-transactions/user.transactions.js";
+import {
+  createNewUser,
+  findOneUser,
+  findUserById,
+  saveUserInDB,
+} from "../db-layer/database-transactions/user.transactions.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -11,7 +15,7 @@ const generateAccessToken = async (userId) => {
 
     const accessToken = user.generateAccessToken();
 
-    await saveUserInDB(user)
+    await saveUserInDB(user);
     return { accessToken };
   } catch (error) {
     throw new ApiError(
@@ -21,7 +25,7 @@ const generateAccessToken = async (userId) => {
   }
 };
 
-const registerUser = asyncHandler(async (req, res,next) => {
+const registerUser = asyncHandler(async (req, res, next) => {
   const { email, username, password } = req.body;
 
   const existedUser = await findOneUser({
@@ -36,21 +40,20 @@ const registerUser = asyncHandler(async (req, res,next) => {
     password,
     username,
   });
-  await saveUserInDB(user)
+  await saveUserInDB(user);
 
-  const createdUser = await findUserById(user._id,true);
+  const createdUser = await findUserById(user._id, true);
   const { accessToken } = await generateAccessToken(user._id);
 
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
-  
+
   let options = {
     httpOnly: true,
-    sameSite:'None'
+    secure: process.env.NODE_ENV === "prod",
+    sameSite: process.env.NODE_ENV === "prod" ? "None" : "",
   };
-  
-
 
   return res
     .status(201)
@@ -97,11 +100,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const { accessToken } = await generateAccessToken(user._id);
 
-  const loggedInUser = await findUserById(user._id,true);
+  const loggedInUser = await findUserById(user._id, true);
 
   const options = {
     httpOnly: true,
-    sameSite:'None'
+    secure: process.env.NODE_ENV === "prod",
+    sameSite: process.env.NODE_ENV === "prod" ? "None" : "",
   };
 
   return res
@@ -119,7 +123,8 @@ const loginUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
-    sameSite:'None'
+    secure: process.env.NODE_ENV === "prod",
+    sameSite: process.env.NODE_ENV === "prod" ? "None" : "",
   };
 
   return res

@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import {ClickHouseService} from "./clickhouse.service.js";
+import { ClickHouseService } from "./clickhouse.service.js";
 import { v4 as uuidV4 } from "uuid";
 
 export default class KafkaService {
@@ -27,26 +27,24 @@ export default class KafkaService {
     await this.consumer.subscribe({ topics: ["container-logs"] });
     await this.consumer.run({
       autoCommit: false,
-      eachBatch: async  ({
+      eachBatch: async ({
         batch,
         heartbeat,
         commitOffsetsIfNecessary,
         resolveOffset,
-      }) =>{
+      }) => {
         const messages = batch.messages;
-        console.log("Received Messages : ", messages.length);
+        console.log("Received Messages In Kafka: ", messages.length);
         for (const message of messages) {
           const stringMsg = message.value.toString();
-          const {  transcode_id,user_id, log } = JSON.parse(stringMsg);
+          const { transcode_id, user_id, log } = JSON.parse(stringMsg);
           try {
             const { query_id } = await this.clickhouseClient.insert({
               table: "log_events",
-              values: [
-                { event_id: uuidV4(), transcode_id,user_id, log },
-              ],
+              values: [{ event_id: uuidV4(), transcode_id, user_id, log }],
               format: "JSONEachRow",
             });
-            console.log("Inserted into clickhouse : ", query_id);
+            console.log("Inserted into clickhouse From Kafka: ", query_id);
             await commitOffsetsIfNecessary(message.offset);
             resolveOffset(message.offset);
             await heartbeat();

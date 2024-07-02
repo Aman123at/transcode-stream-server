@@ -11,7 +11,6 @@ import { ContainerService } from "./container.service.js";
 import { RedisService } from "./redis.service.js";
 import { S3Service } from "./s3.service.js";
 import { v4 as uuidV4 } from "uuid";
-import { getVideoDurationInSeconds } from "get-video-duration";
 import { ClickHouseService } from "./clickhouse.service.js";
 import { checkBuildStatus, updateVideoStatus } from "../utils/helper.js";
 import archiver from "archiver";
@@ -38,7 +37,7 @@ const generatePresignedURLOnUploadStart = asyncHandler(
     // restricting to 100 MB only
     const fileSizeInMB = video.size / (1024 * 1024);
     if (parseInt(fileSizeInMB) > 100) {
-      throw new ApiError(400, "File size should be less than 100MB");
+      throw new ApiError(400, "File size should be less than 100 MB");
     }
 
     const params = {
@@ -74,17 +73,8 @@ const uploadNewVideoOnSuccess = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "Video file name is required");
   }
 
-  const video_path = `${process.env.BASE_TEMP_BUCKET_ACCESS_URL}/${videoFileName}`;
-
-  // calculating video duration
-  const duration = await getVideoDurationInSeconds(video_path);
-  if (!duration) {
-    throw new ApiError(400, "Video file is not valid");
-  }
-
   const addedVideo = await addVideoMetaDataInDB({
     video_file_name: videoFileName,
-    video_duration: duration,
     transcode_id: uuidV4(),
   });
   await saveVideoInDB(addedVideo);
@@ -128,7 +118,7 @@ const getVideosFromQueueAndProcess = asyncHandler(async (req, res, next) => {
       // get fileMetaData from fileKey from redis
       const getFileMapping = await redisService.getValueForKey(message);
       const parsedValue = JSON.parse(getFileMapping);
-      console.log("Message received:", message);
+      console.log("Message received from queue:", message);
 
       // if container is not running then only start new container
       if (!parsedValue.container_running) {
@@ -230,7 +220,6 @@ const downloadVideo = asyncHandler(async (req, res, next) => {
   await archive.finalize();
 });
 
-
 const deleteVideo = asyncHandler(async (req, res, next) => {
   const { transcodeId } = req.params;
   const userId = req.user._id;
@@ -239,7 +228,6 @@ const deleteVideo = asyncHandler(async (req, res, next) => {
   await deleteVideoFromDB(transcodeId);
   return res.json({ success: true, message: "Video Deleted." });
 });
-
 
 export {
   uploadNewVideoOnSuccess,

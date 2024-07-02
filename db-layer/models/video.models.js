@@ -10,6 +10,7 @@ const videoSchema = new Schema(
     },
     video_duration:{
       type: Number,
+      default:0
     },
     video_file_name: {
       type: String,

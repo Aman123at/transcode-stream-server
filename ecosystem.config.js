@@ -1,10 +1,10 @@
 // ecosystem.config.js
-const dotenv = require('dotenv');
-const path = require('path');
+import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-module.exports = {
+export default {
   apps: [
     {
       name: 'transcode-stream',

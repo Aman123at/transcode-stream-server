@@ -5,7 +5,7 @@ const videoSchema = new Schema(
       type: String,
     },
     owner:{
-      type: Schema.Types.ObjectId,
+      type: Schema.ObjectId,
       ref: 'User',
     },
     video_duration:{

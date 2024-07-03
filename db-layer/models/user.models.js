@@ -37,6 +37,10 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Password is required"],
     },
+    video_count :{
+      type: Number,
+      default: 0
+    },
     loginType: {
       type: String,
       enum: AvailableSocialLogins,

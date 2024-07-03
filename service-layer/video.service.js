@@ -15,12 +15,18 @@ import { ClickHouseService } from "./clickhouse.service.js";
 import { checkBuildStatus, updateVideoStatus } from "../utils/helper.js";
 import archiver from "archiver";
 import stream from "stream";
+import { findUserById, updateUserVideoCount } from "../db-layer/database-transactions/user.transactions.js";
 const s3Service = new S3Service();
 const redisService = new RedisService();
 const clickhouseService = new ClickHouseService();
 
 const generatePresignedURLOnUploadStart = asyncHandler(
   async (req, res, next) => {
+    const userId = req.user._id;
+    const user = await findUserById(userId)
+    if(user.video_count >= 8){
+      throw new ApiError(400,"You have reached your limit of 8 videos")
+    }
     if (!req.files || Object.keys(req.files).length === 0) {
       throw new ApiError(400, "No files uploaded.");
     }
@@ -36,8 +42,8 @@ const generatePresignedURLOnUploadStart = asyncHandler(
 
     // restricting to 100 MB only
     const fileSizeInMB = video.size / (1024 * 1024);
-    if (parseInt(fileSizeInMB) > 100) {
-      throw new ApiError(400, "File size should be less than 100 MB");
+    if (parseInt(fileSizeInMB) > 20) {
+      throw new ApiError(400, "File size should be less than 20 MB");
     }
 
     const params = {
@@ -76,6 +82,7 @@ const uploadNewVideoOnSuccess = asyncHandler(async (req, res, next) => {
   const addedVideo = await addVideoMetaDataInDB({
     video_file_name: videoFileName,
     transcode_id: uuidV4(),
+    owner:req.user._id
   });
   await saveVideoInDB(addedVideo);
 
@@ -145,7 +152,8 @@ const getVideosFromQueueAndProcess = asyncHandler(async (req, res, next) => {
 });
 
 const getAllVideosFromDB = asyncHandler(async (req, res, next) => {
-  const videos = await getAllVideos();
+  const userId = req.user._id;
+  const videos = await getAllVideos(userId);
   return res.json({ success: true, videos, length: videos.length });
 });
 
@@ -226,6 +234,7 @@ const deleteVideo = asyncHandler(async (req, res, next) => {
   const outputFolder = `outputs/${userId}/${transcodeId}`;
   await s3Service.deleteTranscode(outputFolder);
   await deleteVideoFromDB(transcodeId);
+  await updateUserVideoCount(userId)
   return res.json({ success: true, message: "Video Deleted." });
 });
 

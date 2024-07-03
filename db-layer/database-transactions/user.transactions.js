@@ -13,4 +13,12 @@ const saveUserInDB = async (user)=>{
 const createNewUser = async(payload)=>{
     return await User.create(payload)
 }
-export {findUserById,findOneUser,saveUserInDB,createNewUser}
+const updateUserVideoCount = async(user_id)=>{
+    const user = await User.findById(user_id);
+    await User.findByIdAndUpdate(user_id,{
+        $set:{
+            video_count: user.video_count-1
+        }
+    })
+}
+export {findUserById,findOneUser,saveUserInDB,createNewUser,updateUserVideoCount}

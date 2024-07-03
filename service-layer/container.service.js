@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { getECSClient, getECSRunTaskCommand } from "../utils/helper.js";
+import { getDevContainerExecutionCommand, getECSClient, getECSRunTaskCommand } from "../utils/helper.js";
 class ContainerService {
   async runContainer(identityName, fileKey) {
     const envMode = process.env.NODE_ENV;

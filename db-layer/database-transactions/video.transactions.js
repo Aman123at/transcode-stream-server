@@ -7,8 +7,8 @@ const addVideoMetaDataInDB = async(payload)=>{
     return await Video.create(payload)
 }
 
-const getAllVideos = async () =>{
-    return await Video.find();
+const getAllVideos = async (userId) =>{
+    return await Video.find({owner:userId});
 }
 const getVideoByTranscodeId = async (transcode_id) =>{
     return await Video.find({transcode_id});

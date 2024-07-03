@@ -1,5 +1,4 @@
 import { Redis } from "ioredis";
-import { promisify } from "util";
 class RedisService {
   constructor() {
     this.redisClient = new Redis({
@@ -28,11 +27,8 @@ class RedisService {
 
   async getS3UploadEvents(occupiedSlots) {
     const availableSlots = 5 - occupiedSlots;
-    const lrangeAsync = promisify(this.redisClient.lrange).bind(
-      this.redisClient
-    );
     try {
-      const messages = await lrangeAsync(
+      const messages = await this.redisClient.lrange(
         process.env.REDIS_QUEUE_NAME,
         -availableSlots,
         -1
